@@ -1,0 +1,11 @@
+#Ambiente virtual
+venv/
+
+# Arquivos de cache do pytest
+.pytest_cache/
+__pycache__/
+
+#metadados do pacote
+*.egg-info/
+
+

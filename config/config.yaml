@@ -1,0 +1,79 @@
+shopee:
+  url: https://shopee.com.br/
+  categorias: 
+    - nome: Cozinha
+      id_shopee: null
+      subcategorias:
+      - Eletroportáteis
+      - Utensílios de Cozinha
+      - Panelas e Frigideiras
+      - Talheres e Utensílios
+      - Armazenamento e Organização
+    
+    - nome: Eletrônicos
+      id_shopee: null
+      subcategorias:
+      - Celulares e Smartphones
+      - Acessórios para Celulares
+      - Computadores e Informática
+      - Áudio e Vídeo
+      - Jogos e Consoles
+
+  timeout_segundos: 90
+
+# Fitragem no site da Shopee
+filtros:
+  preco:
+    min: 60.00
+    max: 2500.00
+    permitir_excecoes_marcaPremium: true
+    desconto_minimo_percentual: 35
+    
+  confianca:
+    nota_minima: 4.5
+    avaliacoes_minimas: 250
+
+# marcas populares (permitidas) e marcas "premium" (exceções)
+marcas:
+  permitidas:
+    - Mondial
+    - Philco
+    - Britânia
+    - Oster
+    - Arno
+    - Cadence
+    - Electrolux
+    - Tramontina
+    - Haylou
+    - Xiaomi
+    - Samsung
+    - LG
+    - Sony
+    - JBL
+    - Philips
+    - Lenovo
+  premium:
+    - Apple
+    - Dell
+    - Microsoft
+    - Asus
+    - AOC
+
+# Configurações do WhatsApp
+whatsapp:
+  destino_grupo: "https://chat.whatsapp.com/EXEMPLO"
+  modo_teste: true
+  usar_wa_web: true
+
+
+agendamento:
+  ativar_agendamento: true
+  horario_execucao: "10:00"
+  horario_final_execucao: "18:00"
+  intervalo_execucao_minutos: 60
+  dias_execucao: 
+    - segunda-feira
+    - terça-feira
+    - quarta-feira
+    - quinta-feira
+    - sexta-feira
