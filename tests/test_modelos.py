@@ -1,6 +1,6 @@
 from src.processor.modelos import Produto, Oferta
 
-
+# teste para o modelo
 def test_produto(produto_base):
     assert produto_base.id == "123"
     assert produto_base.nome == "Produto Teste"

@@ -15,3 +15,17 @@ def produto_base():
         link="http://exemplo.com/produto",
         imagem_url="http://exemplo.com/imagem.jpg"
     )
+
+@pytest.fixture
+def config_filtros():
+    return {
+        "filtros":{
+            "preco": {"min": 60, "max": 2500, "permitir_excecoes_marcaPremium": True, "desconto_minimo_percentual": 35},
+            "confianca": {"nota_minima": 4.5, "avaliacoes_minimas": 250}
+        },
+        "marcas": {
+            "permitidas": ["Xiaomi", "Samsung"],
+            "premium": ["Apple", "AOC"]
+        }
+    }
+    
