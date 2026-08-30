@@ -10,4 +10,9 @@ requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src"]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: testes que incluem credenciais e serviços externos"
+]
