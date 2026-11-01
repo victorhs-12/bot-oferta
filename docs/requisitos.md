@@ -3,8 +3,7 @@
 - O sistema deve considerar as categorias configuradas.
 - O sistema deve filtrar produtos por preço.
 - O sistema deve filtrar produtos por desconto.
-- O sistema deve filtrar produtos por marca.
-- O sistema deve validar nota e quantidade de avaliações.
+- O sistema deve validar nota e quantidade de vendas.
 - O sistema não deve publicar ofertas duplicadas dentro do período definido.
 - O sistema deve formatar uma mensagem com título, preço, desconto, imagem e link.
 - O sistema deve respeitar os horários configurados.

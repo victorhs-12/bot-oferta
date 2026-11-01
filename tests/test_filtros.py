@@ -1,92 +1,190 @@
-import src.processor.filtros as filtros
+from dataclasses import replace
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+
 import pytest
 
-from src.processor.modelos import Produto
-
-#teste de cálculo de desconto (teste unitário também, mas está separado dos outros testes unitários, para entender melho)
-def test_calcular_desconto_percentual(config_filtros):
-    produto = Produto(id = "1", nome = "Xiaomi Redmi Note 10", preco = 2000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    desconto = filtros.calcular_desconto_percentual(produto)
-    assert desconto == pytest.approx(20.0, rel=1e-3)
+from src.processor import filtros
 
 
-#testes unitários
+@pytest.mark.parametrize(
+    ("nota", "vendas", "esperado"),
+    [
+        (Decimal("4.5"), 250, True),
+        (Decimal("4.49"), 250, False),
+        (Decimal("4.5"), 249, False),
+    ],
+)
+def test_qualidade_eh_valida(
+    produto_base,
+    config_filtros,
+    nota,
+    vendas,
+    esperado,
+):
+    produto = replace(produto_base, nota=nota, vendas=vendas)
+
+    assert filtros.qualidade_eh_valida(produto, config_filtros) is esperado
 
 
-# marca válida
-def test_marca_eh_valida(config_filtros):
-    produto = Produto(id = "5", nome = "Samsung Galaxy S21", preco = 2000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 300, marca = "Samsung", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.marca_eh_valida(produto, config_filtros) == True
+@pytest.mark.parametrize(
+    ("preco", "esperado"),
+    [
+        (Decimal("60.00"), True),
+        (Decimal("2500.00"), True),
+        (Decimal("59.99"), False),
+        (Decimal("2500.01"), False),
+    ],
+)
+def test_preco_eh_valido(produto_base, config_filtros, preco, esperado):
+    produto = replace(produto_base, preco=preco)
 
-# marca premium
-def test_marca_eh_premium(config_filtros):
-    produto = Produto(id = "6", nome = "IPhone 13", preco = 2700.0, preco_original = 4500.0, nota = 4.5, numero_avaliacoes = 260, marca = "Apple", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.marca_eh_premium(produto, config_filtros) == True
-
-# confianca válida ou inválida, dependendo da configuração de filtros
-def test_confianca_eh_valida(config_filtros):
-
-    #confiança inválida, pois o número de avaliações é menor que o mínimo definido na configuração
-    produto = Produto(id = "7", nome = "Xiaomi Redmi Note 10", preco = 2000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.confianca_eh_valida(produto, config_filtros) == False
-
-    #confiança válida, pois o número de avaliações é maior que o mínimo definido na configuração
-    produto = Produto(id = "8", nome = "Xiaomi Redmi Note 10", preco = 2000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 260, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.confianca_eh_valida(produto, config_filtros) == True
-
-    #confiança válida, pois o número de avaliações é igual ao mínimo definido na configuração
-    produto = Produto(id = "9", nome = "Xiaomi Redmi Note 10", preco = 2000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 250, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.confianca_eh_valida(produto, config_filtros) == True
+    assert filtros.preco_eh_valido(produto, config_filtros) is esperado
 
 
-def test_preco_eh_valido(config_filtros):
-    # preço válido, pois o preço do produto está dentro da faixa definida na configuração
-    produto = Produto(id = "8", nome = "Xiaomi Redmi Note 10", preco = 2500.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.preco_eh_valido(produto, config_filtros) == True
+@pytest.mark.parametrize(
+    ("desconto", "esperado"),
+    [
+        (Decimal("35.0"), True),
+        (Decimal("34.99"), False),
+    ],
+)
+def test_desconto_eh_valido(oferta_base, config_filtros, desconto, esperado):
+    oferta = replace(oferta_base, desconto_percentual=desconto)
 
-    # preço inválido, pois o preço do produto está fora da faixa definida na configuração
-    produto = Produto(id = "9", nome = "Xiaomi Redmi Note 10", preco = 3000.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.preco_eh_valido(produto, config_filtros) == False
-
-    # preço válido, pois o preço do produto está dentro da faixa definida na configuração
-    produto = Produto(id = "10", nome = "Fone de Ouvido", preco = 60.0, preco_original = 100.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.preco_eh_valido(produto, config_filtros) == True
-
-    # preço inválido, pois o preço do produto está fora da faixa definida na configuração
-    produto = Produto(id = "10", nome = "Fone de Ouvido", preco = 40.0, preco_original = 100.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.preco_eh_valido(produto, config_filtros) == False
-
-    
+    assert filtros.desconto_eh_valido(oferta, config_filtros) is esperado
 
 
+def test_oferta_eh_valida_quando_atende_todas_as_regras(
+    oferta_base,
+    config_filtros,
+    config_categorias,
+    agora,
+):
+    assert filtros.oferta_eh_valida(
+        oferta_base,
+        config_filtros,
+        config_categorias,
+        agora,
+    ) is True
 
-def test_desconto_eh_valido(config_filtros):
-    # desconto válido, pois o desconto do produto está dentro da faixa definida na configuração
-    produto = Produto(id = "9", nome = "Xiaomi Redmi Note 10", preco = 1500.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.desconto_eh_valido(produto, config_filtros) == True
 
-    # desconto válido, pois o desconto do produto está dentro da faixa definida na configuração
-    produto = Produto(id = "10", nome = "Fone de Ouvido", preco = 130.0, preco_original = 200.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.desconto_eh_valido(produto, config_filtros) == True
+@pytest.mark.parametrize(
+    ("alteracao_produto", "desconto"),
+    [
+        ({"preco": Decimal("2500.01")}, Decimal("35.0")),
+        ({"nota": Decimal("4.49")}, Decimal("35.0")),
+        ({"vendas": 249}, Decimal("35.0")),
+        ({}, Decimal("34.99")),
+    ],
+)
+def test_oferta_eh_invalida_quando_uma_regra_falha(
+    produto_base,
+    oferta_base,
+    config_filtros,
+    config_categorias,
+    agora,
+    alteracao_produto,
+    desconto,
+):
+    produto = replace(produto_base, **alteracao_produto)
+    oferta = replace(
+        oferta_base,
+        produto=produto,
+        desconto_percentual=desconto,
+    )
 
-    # desconto inválido, pois o desconto do produto está fora da faixa definida na configuração
-    produto = Produto(id = "11", nome = "Fone de Ouvido", preco = 150.0, preco_original = 200.0, nota = 4.5, numero_avaliacoes = 100, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.desconto_eh_valido(produto, config_filtros) == False
+    assert filtros.oferta_eh_valida(
+        oferta,
+        config_filtros,
+        config_categorias,
+        agora,
+    ) is False
 
-# teste de  produto válido, considerando todas as regras de negócio 
-def test_produto_eh_valido(config_filtros):
-    produto = Produto(id = "10", nome = "Xiaomi Redmi Note 10", preco = 1600.0, preco_original = 2500.0, nota = 4.5, numero_avaliacoes = 300, marca = "Xiaomi", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.produto_eh_valido(produto, config_filtros) == True
 
-    #teste de marca inválida, colocando de propósito uma marca que não está na lista de marcas permitidas e na premium
-    produto = Produto(id = "2", nome = "RedMagic 10s Pro", preco = 3000.0, preco_original = 3500.0, nota = 4.5, numero_avaliacoes = 250, marca = "RedMagic", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.produto_eh_valido(produto, config_filtros) == False
+def test_oferta_eh_invalida_fora_da_vigencia(
+    oferta_base,
+    config_filtros,
+    config_categorias,
+):
+    depois_do_fim = oferta_base.fim_vigencia + timedelta(seconds=1)
 
-    #teste de produto premium fora da faixa de preço, mas com desconto válido
-    produto = Produto(id = "3", nome = "IPhone 13", preco = 2700.0, preco_original = 4500.0, nota = 4.5, numero_avaliacoes = 260, marca = "Apple", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.produto_eh_valido(produto, config_filtros) == True
+    assert filtros.oferta_eh_valida(
+        oferta_base,
+        config_filtros,
+        config_categorias,
+        depois_do_fim,
+    ) is False
 
-    #teste de produto premium fora da faixa de preço, mas com desconto válido, porém com nota abaixo do mínimo definido na configuração
-    produto = Produto(id = "4", nome = "IPhone 13 Pro Max", preco = 3500.0, preco_original = 6500.0, nota = 3.5, numero_avaliacoes = 260, marca = "Apple", link = "http://exemplo.com/produto", imagem_url = "http://exemplo.com/imagem.jpg")
-    assert filtros.produto_eh_valido(produto, config_filtros) == False
-    
+
+def test_oferta_eh_invalida_fora_das_categorias(
+    produto_base,
+    oferta_base,
+    config_filtros,
+    config_categorias,
+    agora,
+):
+    produto = replace(produto_base, categorias_id=("999",))
+    oferta = replace(oferta_base, produto=produto)
+
+    assert filtros.oferta_eh_valida(
+        oferta,
+        config_filtros,
+        config_categorias,
+        agora,
+    ) is False
+
+
+# vigência: inicio_vigencia <= agora < fim_vigencia
+def test_vigencia_inclui_inicio_e_exclui_fim(oferta_base):
+    assert filtros.vigencia_eh_valida(oferta_base, oferta_base.inicio_vigencia) is True
+    assert filtros.vigencia_eh_valida(oferta_base, oferta_base.fim_vigencia) is False
+    assert filtros.vigencia_eh_valida(
+        oferta_base,
+        oferta_base.inicio_vigencia - timedelta(seconds=1),
+    ) is False
+
+
+def test_vigencia_rejeita_relogio_sem_timezone(oferta_base):
+    with pytest.raises(ValueError):
+        filtros.vigencia_eh_valida(oferta_base, datetime(2026, 9, 15))
+
+
+def test_vigencia_compara_fusos_diferentes(oferta_base):
+    # fim = 2026-09-30 23:59:59Z = 20:59:59-03:00; um segundo antes ainda vale
+    brasilia = timezone(timedelta(hours=-3))
+    quase_fim = datetime(2026, 9, 30, 20, 59, 58, tzinfo=brasilia)
+
+    assert filtros.vigencia_eh_valida(oferta_base, quase_fim) is True
+
+
+# categorias
+def test_categoria_aceita_produto_com_id_configurado(produto_base, config_categorias):
+    assert filtros.categoria_eh_valida(produto_base, config_categorias) is True
+
+
+def test_categoria_compara_ids_numericos_do_config_como_texto(
+    produto_base,
+    config_categorias,
+):
+    produto = replace(produto_base, categorias_id=("200",))
+
+    assert filtros.categoria_eh_valida(produto, config_categorias) is True
+
+
+def test_categoria_rejeita_id_nao_configurado(produto_base, config_categorias):
+    produto = replace(produto_base, categorias_id=("999",))
+
+    assert filtros.categoria_eh_valida(produto, config_categorias) is False
+
+
+def test_categoria_rejeita_quando_ids_api_vazio(produto_base):
+    config_vazio = [{"nome": "Cozinha", "ids_api": []}]
+
+    assert filtros.categoria_eh_valida(produto_base, config_vazio) is False
+
+
+def test_categoria_rejeita_produto_sem_categorias(produto_base, config_categorias):
+    produto = replace(produto_base, categorias_id=())
+
+    assert filtros.categoria_eh_valida(produto, config_categorias) is False

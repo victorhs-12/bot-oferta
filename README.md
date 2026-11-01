@@ -19,8 +19,8 @@ Em desenvolvimento
 ## FUNCIONALIDADES
 
 - Coleta de ofertas da Shopee;
-- Filtros por categoria, preço, marca e desconto;
-- Validação de nota e quantidade de avaliações;
+- Filtros por categoria, preço e desconto;
+- Validação de nota e quantidade de vendas;
 - Persistência das ofertas;
 - Controle de duplicidade;
 - Formatação de mensagens;
